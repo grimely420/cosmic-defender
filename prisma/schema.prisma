@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  username    String   @unique
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  games       Game[]
+}
+
+model Game {
+  id         String    @id @default(cuid())
+  profileId  String
+  profile    Profile   @relation(fields: [profileId], references: [id])
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  finalScore Int       @default(0)
+  finalRound Int       @default(1)
+  isCompleted Boolean  @default(false)
+  rounds     Round[]
+}
+
+model Round {
+  id                  String   @id @default(cuid())
+  gameId              String
+  game                Game     @relation(fields: [gameId], references: [id])
+  roundNumber         Int
+  score               Int      @default(0)
+  asteroidsDestroyed  Int      @default(0)
+  shotsFired          Int      @default(0)
+  accuracyPercentage  Int      @default(0)
+  createdAt           DateTime @default(now())
+}
