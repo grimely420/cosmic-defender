@@ -17,7 +17,8 @@ export async function GET() {
     },
   });
 
-  const leaderboard = topGames.map((g: (typeof topGames)[number], i: number) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const leaderboard = (topGames as any[]).map((g: any, i: number) => ({
     rank: i + 1,
     username: g.profile.username,
     displayName: g.profile.displayName,
