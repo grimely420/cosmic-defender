@@ -17,7 +17,7 @@ export async function GET() {
     },
   });
 
-  const leaderboard = topGames.map((g, i) => ({
+  const leaderboard = topGames.map((g: (typeof topGames)[number], i: number) => ({
     rank: i + 1,
     username: g.profile.username,
     displayName: g.profile.displayName,
