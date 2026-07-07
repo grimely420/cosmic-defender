@@ -8,13 +8,13 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 leading-relaxed text-gray-900 bg-white">
-      <Link href="/" className="text-emerald-600 hover:underline">
+    <main className="mx-auto max-w-3xl px-6 py-12 leading-relaxed text-gray-900 bg-white" style={{ backgroundColor: '#ffffff', color: '#171717' }}>
+      <Link href="/" className="text-emerald-600 hover:underline" style={{ color: '#059669' }}>
         &larr; Back to Cosmic Defender
       </Link>
 
       <header className="my-8 text-center">
-        <h1 className="text-3xl font-bold uppercase tracking-widest text-emerald-600">
+        <h1 className="text-3xl font-bold uppercase tracking-widest text-emerald-600" style={{ color: '#059669' }}>
           Terms of Service
         </h1>
         <p className="mt-3 text-sm text-gray-600">
@@ -25,7 +25,7 @@ export default function TermsPage() {
         </p>
       </header>
 
-      <section className="space-y-8 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-gray-300 [&_h2]:pb-1 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-gray-900 [&_h3]:mb-1 [&_h3]:font-semibold [&_h3]:text-gray-800 [&_strong]:text-gray-900 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
+      <section className="space-y-8 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-gray-300 [&_h2]:pb-1 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-gray-900 [&_h3]:mb-1 [&_h3]:font-semibold [&_h3]:text-gray-800 [&_strong]:text-gray-900 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6" style={{ color: '#171717' }}>
         <div>
           <h2>1. Acceptance of Terms</h2>
           <p>
@@ -218,7 +218,7 @@ export default function TermsPage() {
             the Site at{" "}
             <a
               href="https://c-defender.dev"
-              className="text-emerald-600 hover:underline"
+              className="text-emerald-600 hover:underline" style={{ color: '#059669' }}
             >
               https://c-defender.dev
             </a>
@@ -229,11 +229,11 @@ export default function TermsPage() {
 
       <footer className="mt-12 border-t border-gray-300 pt-6 text-center text-sm text-gray-600">
         <p>
-          <Link href="/terms" className="text-emerald-600 hover:underline">
+          <Link href="/terms" className="text-emerald-600 hover:underline" style={{ color: '#059669' }}>
             Terms of Service
           </Link>{" "}
           &middot;{" "}
-          <Link href="/privacy" className="text-emerald-600 hover:underline">
+          <Link href="/privacy" className="text-emerald-600 hover:underline" style={{ color: '#059669' }}>
             Privacy Policy
           </Link>
         </p>
