@@ -1,6 +1,7 @@
 import {ClerkProvider, Show, SignInButton, SignUpButton, UserButton} from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,18 @@ export default function RootLayout({
             </Show>
           </header>
           {children}
+          <footer className="mt-auto border-t border-gray-800 py-6 text-center text-sm text-gray-500">
+            <p>
+              <Link href="/terms" className="text-emerald-400 hover:underline">
+                Terms of Service
+              </Link>{" "}
+              &middot;{" "}
+              <Link href="/privacy" className="text-emerald-400 hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
+            <p className="mt-2">&copy; Mark Geden. All Rights Reserved.</p>
+          </footer>
         </ClerkProvider>
       </body>
     </html>
