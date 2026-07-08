@@ -32,10 +32,6 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ClerkProvider>
           <header className="flex h-16 items-center justify-end gap-4 border-b px-4">
-            <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton />
-            </Show>
             <Show when="signed-in">
               <UserButton />
             </Show>
