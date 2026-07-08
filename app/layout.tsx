@@ -41,13 +41,13 @@ export default function RootLayout({
             </Show>
           </header>
           {children}
-          <footer className="mt-auto border-t border-gray-800 py-6 text-center text-sm text-gray-500">
+          <footer className="mt-auto border-t border-gray-300 py-6 text-center text-sm" style={{ borderColor: '#cccccc', color: '#333333' }}>
             <p>
-              <Link href="/terms" className="text-emerald-400 hover:underline">
+              <Link href="/terms" className="hover:underline" style={{ color: '#059669' }}>
                 Terms of Service
               </Link>{" "}
               &middot;{" "}
-              <Link href="/privacy" className="text-emerald-400 hover:underline">
+              <Link href="/privacy" className="hover:underline" style={{ color: '#059669' }}>
                 Privacy Policy
               </Link>
             </p>
