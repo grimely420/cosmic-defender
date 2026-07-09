@@ -150,10 +150,10 @@ class AsteroidsGame {
             btn.addEventListener('mouseup',    () => { if (upFn) upFn(); });
         };
 
-        addHold(rotLeft,   () => { this.ship.rotating = 'left';  }, () => { this.ship.rotating = false; });
-        addHold(rotRight,  () => { this.ship.rotating = 'right'; }, () => { this.ship.rotating = false; });
+        addHold(rotLeft,   () => { this.ship.rotateLeft = true;  }, () => { this.ship.rotateLeft = false; });
+        addHold(rotRight,  () => { this.ship.rotateRight = true; }, () => { this.ship.rotateRight = false; });
         addHold(thrustBtn, () => { this.ship.thrusting = true;   }, () => { this.ship.thrusting = false; });
-        addHold(fireBtn,   () => { this.shootBullet(); }, null);
+        addHold(fireBtn,   () => { this.fireBullet(); }, null);
 
         this._touchControls = controls;
     }
