@@ -17,15 +17,14 @@ export async function GET() {
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const leaderboard = (topGames as any[]).map((g: any, i: number) => ({
-    rank: i + 1,
-    username: g.profile.username,
-    displayName: g.profile.displayName,
-    avatarUrl: g.profile.avatarUrl,
-    score: g.finalScore,
-    roundReached: g.finalRound,
-    achievedAt: g.endedAt,
+  const leaderboard = topGames.map((game, index) => ({
+    rank: index + 1,
+    username: game.profile.username,
+    displayName: game.profile.displayName,
+    avatarUrl: game.profile.avatarUrl,
+    score: game.finalScore,
+    roundReached: game.finalRound,
+    achievedAt: game.endedAt,
   }));
 
   return NextResponse.json(leaderboard);

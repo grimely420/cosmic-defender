@@ -4,12 +4,7 @@ class AsteroidsGame {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
-        // Debug: Check if canvas was found
-        if (!this.canvas) {
-            console.error('Game canvas not found!');
-            return;
-        }
-        console.log('Game canvas found:', this.canvas);
+        if (!this.canvas) return;
         
         // Responsive canvas sizing for desktop
         this.setupResponsiveCanvas();
@@ -17,8 +12,6 @@ class AsteroidsGame {
         // Load images
         this.coinImage = new Image();
         this.coinImage.src = './assets/coin.png';
-        this.explosionImage = new Image();
-        this.explosionImage.src = './assets/explosion.png';
         
         // Explosion effects array
         this.explosions = [];
@@ -83,19 +76,8 @@ class AsteroidsGame {
         const playAgainBtn = document.getElementById('playAgain');
         const endGameBtn = document.getElementById('endGameBtn');
         
-        console.log('Button elements found:', {
-            startGameBtn: !!startBtn,
-            playAgain: !!playAgainBtn,
-            endGameBtn: !!endGameBtn
-        });
-        
         if (startBtn) {
-            startBtn.addEventListener('click', () => {
-                console.log('BEGIN MISSION button clicked!');
-                this.startGame();
-            });
-        } else {
-            console.error('startGameBtn not found!');
+            startBtn.addEventListener('click', () => this.startGame());
         }
         
         if (playAgainBtn) {
@@ -184,19 +166,10 @@ class AsteroidsGame {
     }
     
     drawWaitingScreen() {
-        console.log('Drawing waiting screen...');
-        console.log('Canvas dimensions:', this.canvas.width, 'x', this.canvas.height);
-        console.log('Canvas context:', this.ctx);
-        
-        // Test basic drawing
         if (this.ctx) {
             // Fill entire canvas with black background
             this.ctx.fillStyle = 'black';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            console.log('Black canvas drawn');
-        } else {
-            console.error('Canvas context is null!');
         }
     }
     

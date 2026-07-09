@@ -46,14 +46,30 @@ export default function ProfilePage() {
       setProfile(updated);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
+    } catch {
       alert("Failed to save profile. Please try again.");
     } finally {
       setSaving(false);
     }
   }
 
-  if (!isLoaded || !profile) {
+  if (!isLoaded) {
+    return (
+      <div style={styles.container}>
+        <p style={{ color: "#ccc" }}>Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div style={styles.container}>
+        <p style={{ color: "#ccc" }}>Please sign in to view your profile.</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
     return (
       <div style={styles.container}>
         <p style={{ color: "#ccc" }}>Loading profile...</p>
