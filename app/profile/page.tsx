@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser, UserProfile } from "@clerk/nextjs";
+import Image from "next/image";
 import Link from "next/link";
 
 type Profile = {
@@ -32,14 +33,24 @@ export default function ProfilePage() {
 
   async function handleSave() {
     setSaving(true);
-    await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bio }),
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaved(false);
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bio }),
+      });
+      if (!response.ok) throw new Error("Failed to save profile");
+
+      const updated = await response.json();
+      setProfile(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      alert("Failed to save profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!isLoaded || !profile) {
@@ -55,7 +66,14 @@ export default function ProfilePage() {
       <div style={styles.card}>
         <div style={styles.avatarRow}>
           {user?.imageUrl ? (
-            <img src={user.imageUrl} alt="Avatar" style={styles.avatar} />
+            <Image
+              src={user.imageUrl}
+              alt="Avatar"
+              width={80}
+              height={80}
+              unoptimized
+              style={styles.avatar}
+            />
           ) : (
             <div style={styles.avatarPlaceholder}>👤</div>
           )}

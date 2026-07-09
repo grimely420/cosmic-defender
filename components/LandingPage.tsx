@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useUser, SignInButton, SignUpButton } from "@clerk/nextjs";
+import Image from "next/image";
 import Link from "next/link";
 
 type LeaderboardEntry = {
@@ -158,13 +159,13 @@ export default function LandingPage() {
             </thead>
             <tbody>
               {leaderboard.map((e) => (
-                <tr key={e.rank} style={{ borderBottom: "1px solid #333" }}>
+                <tr key={`${e.rank}-${e.username}`} style={{ borderBottom: "1px solid #333" }}>
                   <td style={{ padding: "8px 12px", color: e.rank <= 3 ? "#FFD700" : "white" }}>
                     #{e.rank}
                   </td>
                   <td style={{ padding: "8px 12px", display: "flex", alignItems: "center", gap: 10 }}>
                     {e.avatarUrl ? (
-                      <img src={e.avatarUrl} alt="" width={30} height={30} style={{ borderRadius: "50%" }} />
+                      <Image src={e.avatarUrl} alt="" width={30} height={30} unoptimized style={{ borderRadius: "50%" }} />
                     ) : (
                       <span>👤</span>
                     )}

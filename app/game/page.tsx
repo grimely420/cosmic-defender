@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function GamePage() {
@@ -20,7 +21,7 @@ export default function GamePage() {
     const win = window as any;
 
     if (win.AsteroidsGame) {
-      setGameReady(true);
+      setTimeout(() => setGameReady(true), 0);
       return;
     }
 
@@ -28,7 +29,7 @@ export default function GamePage() {
     if (document.getElementById(SCRIPT_ID)) {
       const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement & { dataset: DOMStringMap };
       if (existing.dataset.loaded) {
-        setGameReady(true);
+        setTimeout(() => setGameReady(true), 0);
       } else {
         existing.addEventListener("load", () => setGameReady(true), { once: true });
       }
@@ -79,12 +80,13 @@ export default function GamePage() {
             onClick={() => setShowAvatarModal(true)}
           >
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt="Avatar"
+                width={60}
+                height={60}
+                unoptimized
                 style={{
-                  width: 60,
-                  height: 60,
                   borderRadius: "50%",
                   border: "2px solid #4CAF50",
                   boxShadow: "0 0 15px rgba(76,175,80,0.5)",

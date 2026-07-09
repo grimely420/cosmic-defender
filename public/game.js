@@ -158,28 +158,29 @@ class AsteroidsGame {
         this._touchControls = controls;
     }
 
-    startGame() {
-        console.log('startGame() called!');
+    async startGame() {
+        if (this.gameStarted || this.gameActive) return;
         
         // Hide the Begin Mission button
         const playNowButton = document.getElementById('playNowButton');
-        console.log('Play now button:', playNowButton);
         if (playNowButton) {
             playNowButton.style.display = 'none';
         }
         
+        // Mark game as starting so button can't trigger again
+        this.gameStarted = true;
+        
+        // Start new game in database first to avoid race with save calls
+        await this.startNewGame();
+        
         // Initialize game
         this.gameActive = true;
-        this.gameStarted = true;
         
         // Spawn initial asteroids
         this.spawnAsteroids(4);
         
         // Start game loop
         this.gameLoop();
-        
-        // Start new game in database
-        this.startNewGame();
     }
     
     drawWaitingScreen() {
@@ -333,16 +334,18 @@ class AsteroidsGame {
         }
         
         // Ship-asteroid collisions
-        this.asteroids.forEach((asteroid, index) => {
-            if (this.checkCollision(this.ship, asteroid)) {
-                // Create ship explosion first
-                this.createShipExplosion();
-                
-                // Then lose life and handle game logic
-                this.loseLife();
-                this.asteroids.splice(index, 1);
+        if (!this.isRespawning && this.ship.visible) {
+            for (let i = this.asteroids.length - 1; i >= 0; i--) {
+                if (this.checkCollision(this.ship, this.asteroids[i])) {
+                    // Create ship explosion first
+                    this.createShipExplosion();
+                    
+                    // Then lose life and handle game logic
+                    this.loseLife();
+                    this.asteroids.splice(i, 1);
+                }
             }
-        });
+        }
     }
     
     checkCollision(obj1, obj2) {
@@ -591,7 +594,7 @@ class AsteroidsGame {
         document.getElementById('gameOver').classList.remove('hidden');
     }
     
-    resetGame() {
+    async resetGame() {
         this.lives = 5;
         this.round = 1;
         this.currentRound = 1;
@@ -609,13 +612,19 @@ class AsteroidsGame {
         this.asteroids = [];
         this.bullets = [];
         this.explosions = [];
-        this.gameActive = true;
+        this.isRespawning = false;
         this.ship.reset(this.canvas.width, this.canvas.height);
+        this.ship.visible = true;
+        this.gameActive = false;
         
         document.getElementById('gameOver').classList.add('hidden');
+        
+        // Start new game in database first to avoid race with save calls
+        await this.startNewGame();
+        
+        this.gameActive = true;
         this.spawnAsteroids(4);
         this.updateUI();
-        this.startNewGame();
         this.gameLoop();
     }
     
@@ -657,7 +666,7 @@ class AsteroidsGame {
             
             const data = await response.json();
             this.currentGameId = data.game_id;
-        } catch (error) {
+        } catch {
             // Error starting new game
         }
     }
@@ -692,8 +701,8 @@ class AsteroidsGame {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const result = await response.json();
-        } catch (error) {
+            await response.json();
+        } catch {
             // Error saving final score
         }
     }
@@ -728,7 +737,7 @@ class AsteroidsGame {
             }
             
             // Round statistics saved successfully
-        } catch (error) {
+        } catch {
             // Error saving round score
         }
     }
@@ -1158,17 +1167,18 @@ class Asteroid {
         switch(size) {
             case 'large':
                 this.radius = 30 * scaleFactor;
-                this.speed = 1 * scaleFactor;
+                this.baseSpeed = 1;
                 break;
             case 'medium':
                 this.radius = 20 * scaleFactor;
-                this.speed = 1.5 * scaleFactor;
+                this.baseSpeed = 1.5;
                 break;
             case 'small':
                 this.radius = 10 * scaleFactor;
-                this.speed = 2 * scaleFactor;
+                this.baseSpeed = 2;
                 break;
         }
+        this.speed = this.baseSpeed * scaleFactor;
         
         // Random direction
         const angle = Math.random() * Math.PI * 2;
@@ -1216,7 +1226,8 @@ class Bullet {
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 8 * scaleFactor;
+        this.baseSpeed = 8;
+        this.speed = this.baseSpeed * scaleFactor;
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
         this.radius = 4 * scaleFactor;
@@ -1317,7 +1328,7 @@ class Bullet {
     drawTrail(ctx) {
         ctx.save();
         
-        this.trail.forEach((point, index) => {
+        this.trail.forEach((point) => {
             const alpha = (1 - point.age / this.maxTrailLength) * 0.6;
             const size = this.radius * (1 - point.age / this.maxTrailLength) * 1.5;
             
@@ -1487,7 +1498,7 @@ class Explosion {
         // Draw particles
         this.particles.forEach(particle => {
             // Draw particle trail
-            particle.trail.forEach((point, index) => {
+            particle.trail.forEach((point) => {
                 if (point.life > 0) {
                     ctx.globalAlpha = point.life * particle.life * 0.3;
                     ctx.fillStyle = particle.color;
@@ -1537,12 +1548,6 @@ AsteroidsGame.prototype.draw = function() {
     this.explosions.forEach(explosion => explosion.draw(this.ctx));
 };
 
-// Initialize game when page loads
-let game;
-window.addEventListener('load', () => {
-    game = new AsteroidsGame();
-});
-
 // Touch Controls and Device Detection Methods
 AsteroidsGame.prototype.detectTouchDevice = function() {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
@@ -1553,7 +1558,8 @@ AsteroidsGame.prototype.setupResponsiveCanvas = function() {
         // Define base dimensions for desktop (reference size)
         const baseWidth = 1920;
         const baseHeight = 1080;
-        const baseCanvasSize = 1000; // Target canvas size on base screen
+        const baseCanvasWidth = 1000; // Target canvas width on base screen
+        const aspectRatio = 3 / 4; // 4:3 aspect ratio matching the page markup
         
         // Get current window dimensions
         const windowWidth = window.innerWidth;
@@ -1562,21 +1568,21 @@ AsteroidsGame.prototype.setupResponsiveCanvas = function() {
         // Calculate scale factor based on the smaller dimension
         const scaleFactor = Math.min(windowWidth / baseWidth, windowHeight / baseHeight);
         
-        // Apply scale factor to canvas size
-        let canvasSize = Math.floor(baseCanvasSize * scaleFactor);
+        // Apply scale factor to canvas width
+        let canvasWidth = Math.floor(baseCanvasWidth * scaleFactor);
         
         // Ensure reasonable bounds
-        const minSize = Math.min(300, windowWidth * 0.6); // Minimum for mobile
+        const minSize = Math.min(300, windowWidth * 0.6); // Minimum width for mobile
         const maxSize = Math.min(windowWidth * 0.9, windowHeight * 0.9);
         
-        canvasSize = Math.max(minSize, Math.min(canvasSize, maxSize));
+        canvasWidth = Math.max(minSize, Math.min(canvasWidth, maxSize));
         
         // Calculate final scale factor for game objects
-        const objectScaleFactor = canvasSize / baseCanvasSize;
+        const objectScaleFactor = canvasWidth / baseCanvasWidth;
         
-        // Apply new dimensions
-        this.canvas.width = canvasSize;
-        this.canvas.height = canvasSize;
+        // Apply new dimensions (4:3 aspect ratio, not square)
+        this.canvas.width = canvasWidth;
+        this.canvas.height = Math.floor(canvasWidth * aspectRatio);
         
         // Store scale factor for game objects
         this.scaleFactor = objectScaleFactor;
@@ -1586,10 +1592,8 @@ AsteroidsGame.prototype.setupResponsiveCanvas = function() {
         
         // Reset ship position if game hasn't started
         if (!this.gameActive && this.ship) {
-            this.ship.reset(canvasSize, canvasSize);
+            this.ship.reset(this.canvas.width, this.canvas.height);
         }
-        
-        console.log(`Canvas: ${canvasSize}x${canvasSize} (Scale: ${scaleFactor.toFixed(2)}, Object Scale: ${objectScaleFactor.toFixed(2)})`);
     };
     
     // Initial resize
@@ -1608,8 +1612,8 @@ AsteroidsGame.prototype.setupResponsiveCanvas = function() {
 AsteroidsGame.prototype.scaleGameObjects = function(scaleFactor) {
     // Scale ship size
     if (this.ship) {
-        this.ship.radius = 15 * scaleFactor; // Base ship radius is 15
-        this.ship.size = 30 * scaleFactor;  // Base ship size is 30
+        this.ship.radius = 24 * scaleFactor; // Match Ship constructor
+        this.ship.shieldRadius = this.ship.radius * 1.5;
     }
     
     // Scale asteroids (check if array exists)
@@ -1626,15 +1630,22 @@ AsteroidsGame.prototype.scaleGameObjects = function(scaleFactor) {
                     asteroid.radius = 10 * scaleFactor;
                     break;
             }
-            asteroid.speed *= scaleFactor; // Also scale speed
+            // Recompute velocity from base speed and direction to avoid compounding
+            asteroid.speed = asteroid.baseSpeed * scaleFactor;
+            const currentSpeed = Math.sqrt(asteroid.vx * asteroid.vx + asteroid.vy * asteroid.vy) || 1;
+            asteroid.vx = (asteroid.vx / currentSpeed) * asteroid.speed;
+            asteroid.vy = (asteroid.vy / currentSpeed) * asteroid.speed;
         });
     }
     
     // Scale bullets (check if array exists)
     if (this.bullets && Array.isArray(this.bullets)) {
         this.bullets.forEach(bullet => {
-            bullet.radius = 3 * scaleFactor; // Base bullet radius is 3
-            bullet.speed *= scaleFactor; // Scale bullet speed
+            bullet.radius = 4 * scaleFactor;
+            bullet.length = 20 * scaleFactor;
+            bullet.speed = bullet.baseSpeed * scaleFactor;
+            bullet.vx = Math.cos(bullet.angle) * bullet.speed;
+            bullet.vy = Math.sin(bullet.angle) * bullet.speed;
         });
     }
     
