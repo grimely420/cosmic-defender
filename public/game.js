@@ -101,22 +101,28 @@ class AsteroidsGame {
             meta.content = meta.content.replace(/,?\s*user-scalable=[^,]+/, '') + ', user-scalable=no';
         }
 
+        const isNarrow = window.innerWidth <= 380;
+        const btnSize = isNarrow ? 54 : 64;
+        const fireSize = isNarrow ? 68 : 80;
+        const fontSize = isNarrow ? 22 : 26;
+        const fireFontSize = isNarrow ? 24 : 28;
+
         const controls = document.createElement('div');
         controls.id = 'touch-controls';
-        controls.style.cssText = 'position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:12px 16px 24px;z-index:100;pointer-events:none;user-select:none;-webkit-user-select:none;gap:16px;';
+        controls.style.cssText = 'position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:8px 14px 16px;z-index:100;pointer-events:none;user-select:none;-webkit-user-select:none;gap:12px;';
 
         const mkBtn = (label, html, extra) => {
             const b = document.createElement('button');
             b.setAttribute('aria-label', label);
             b.innerHTML = html;
-            b.style.cssText = 'pointer-events:all;flex-shrink:0;width:72px;height:72px;border-radius:50%;background:rgba(76,175,80,0.3);border:2px solid rgba(76,175,80,0.8);color:#4CAF50;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 0.05s, background 0.05s;box-shadow:0 4px 10px rgba(0,0,0,0.4);' + (extra || '');
+            b.style.cssText = 'pointer-events:all;flex-shrink:0;width:' + btnSize + 'px;height:' + btnSize + 'px;border-radius:50%;background:rgba(76,175,80,0.3);border:2px solid rgba(76,175,80,0.8);color:#4CAF50;font-size:' + fontSize + 'px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 0.05s, background 0.05s;box-shadow:0 4px 10px rgba(0,0,0,0.4);' + (extra || '');
             return b;
         };
 
         const rotLeft   = mkBtn('Rotate Left',  '&#8634;', '');
         const rotRight  = mkBtn('Rotate Right', '&#8635;', '');
         const thrustBtn = mkBtn('Thrust', '&#9650;', '');
-        const fireBtn   = mkBtn('Fire', '&#128308;', 'width:88px;height:88px;font-size:30px;background:rgba(76,175,80,0.45);');
+        const fireBtn   = mkBtn('Fire', '&#128308;', 'width:' + fireSize + 'px;height:' + fireSize + 'px;font-size:' + fireFontSize + 'px;background:rgba(76,175,80,0.45);');
 
         const rotRow = document.createElement('div');
         rotRow.style.cssText = 'display:flex;gap:14px;pointer-events:none;';
@@ -1572,54 +1578,63 @@ AsteroidsGame.prototype.detectTouchDevice = function() {
 };
 
 AsteroidsGame.prototype.setupResponsiveCanvas = function() {
+    const isMobile = () => window.innerWidth <= 768;
+
     const resizeCanvas = () => {
-        // Define base dimensions for desktop (reference size)
-        const baseWidth = 1920;
-        const baseHeight = 1080;
-        const baseCanvasWidth = 1000; // Target canvas width on base screen
         const aspectRatio = 3 / 4; // 4:3 aspect ratio matching the page markup
-        
-        // Get current window dimensions
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        
-        // Calculate scale factor based on the smaller dimension
-        const scaleFactor = Math.min(windowWidth / baseWidth, windowHeight / baseHeight);
-        
-        // Apply scale factor to canvas width
-        let canvasWidth = Math.floor(baseCanvasWidth * scaleFactor);
-        
-        // Ensure reasonable bounds
-        const minSize = Math.min(300, windowWidth * 0.6); // Minimum width for mobile
-        const maxSize = Math.min(windowWidth * 0.9, windowHeight * 0.9);
-        
-        canvasWidth = Math.max(minSize, Math.min(canvasWidth, maxSize));
-        
-        // Calculate final scale factor for game objects
-        const objectScaleFactor = canvasWidth / baseCanvasWidth;
-        
-        // Apply new dimensions (4:3 aspect ratio, not square)
+        const mobile = isMobile();
+        let canvasWidth, canvasHeight, objectScaleFactor;
+
+        if (mobile) {
+            // Fill the available mobile viewport while leaving room for the
+            // top HUD and bottom touch controls.
+            const horizontalPadding = 8;
+            const topHudHeight = 44;
+            const controlsHeight = 118; // compact controls + safe area padding
+            const availableWidth = Math.max(300, window.innerWidth - horizontalPadding * 2);
+            const availableHeight = Math.max(220, window.innerHeight - topHudHeight - controlsHeight);
+
+            canvasWidth = availableWidth;
+            canvasHeight = Math.floor(canvasWidth * aspectRatio);
+            if (canvasHeight > availableHeight) {
+                canvasHeight = availableHeight;
+                canvasWidth = Math.floor(canvasHeight / aspectRatio);
+            }
+
+            // Use 800px as the mobile reference width so ships/asteroids stay
+            // a comfortable size on small screens.
+            objectScaleFactor = canvasWidth / 800;
+        } else {
+            // Desktop: use a comfortable reference size and scale down only when
+            // the viewport is smaller than the reference.
+            const baseCanvasWidth = 1000;
+            const maxWidth = Math.min(window.innerWidth * 0.9, 1000);
+            const maxHeight = Math.min(window.innerHeight * 0.9, 750); // 1000 * 3/4
+            canvasWidth = Math.min(maxWidth, maxHeight / aspectRatio);
+            canvasHeight = Math.floor(canvasWidth * aspectRatio);
+            objectScaleFactor = canvasWidth / baseCanvasWidth;
+        }
+
+        // Apply new dimensions
         this.canvas.width = canvasWidth;
-        this.canvas.height = Math.floor(canvasWidth * aspectRatio);
-        
-        // Store scale factor for game objects
+        this.canvas.height = canvasHeight;
         this.scaleFactor = objectScaleFactor;
-        
+
         // Scale game objects
         this.scaleGameObjects(objectScaleFactor);
-        
+
         // Reset ship position if game hasn't started
         if (!this.gameActive && this.ship) {
             this.ship.reset(this.canvas.width, this.canvas.height);
         }
     };
-    
+
     // Initial resize
     resizeCanvas();
-    
+
     // Resize on window resize
     window.addEventListener('resize', resizeCanvas);
-    
+
     // Resize on orientation change
     window.addEventListener('orientationchange', () => {
         setTimeout(resizeCanvas, 100); // Delay for orientation change completion

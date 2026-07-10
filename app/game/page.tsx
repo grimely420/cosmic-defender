@@ -110,6 +110,17 @@ export default function GamePage() {
 
         {/* Center — Canvas */}
         <div className="game-center">
+          <div className="mobile-hud">
+            <span>
+              Hull <span id="lives">5</span>
+            </span>
+            <span>
+              Wave <span id="round">1</span>
+            </span>
+            <span>
+              Crystals <span id="score">0</span>
+            </span>
+          </div>
           <canvas ref={canvasRef} id="gameCanvas" width={800} height={600} />
           <div id="playNowButton" className="play-now-button">
             <button id="startGameBtn" className="blinking-button">
@@ -245,10 +256,33 @@ export default function GamePage() {
         #gameOver button { background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: clamp(14px, 2.5vw, 16px); font-family: inherit; }
         #gameOver button:hover { background: #45a049; }
         #gameOver.hidden { display: none !important; }
+        .mobile-hud { display: none; }
         @media (max-width: 768px) {
-          .game-layout { flex-direction: column; align-items: center; }
-          .player-info-side, .game-stats-side { width: 90vw; max-width: 300px; flex-direction: row; justify-content: space-around; }
-          .game-center { max-width: 90vw; order: -1; }
+          /* Hide the site header/footer and side panels on the game page so the
+             canvas can use the full viewport. */
+          body > header, body > footer { display: none !important; }
+          .game-layout { flex-direction: column; align-items: center; justify-content: center; padding: 0; height: 100vh; }
+          .player-info-side, .game-stats-side { display: none !important; }
+          .game-center { max-width: 100vw; width: 100%; order: 0; }
+          #gameCanvas { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+          .mobile-hud {
+            display: flex;
+            gap: 16px;
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(76,175,80,0.4);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            pointer-events: none;
+          }
+          .mobile-hud > span > span { color: #4CAF50; }
         }
       `}</style>
     </div>
