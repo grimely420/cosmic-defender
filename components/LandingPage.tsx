@@ -104,10 +104,10 @@ export default function LandingPage() {
             </>
           ) : (
             <>
-              <SignInButton mode="modal">
+              <SignInButton mode="modal" fallbackRedirectUrl="/game">
                 <button style={{ ...styles.btn, ...styles.btnPrimary }}>Login</button>
               </SignInButton>
-              <SignUpButton mode="modal">
+              <SignUpButton mode="modal" fallbackRedirectUrl="/game">
                 <button style={{ ...styles.btn, ...styles.btnSecondary }}>Register</button>
               </SignUpButton>
             </>

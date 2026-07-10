@@ -233,6 +233,18 @@ export default function GamePage() {
         .game-stats { display: flex; flex-direction: column; gap: 1.5vh; font-size: clamp(10px,1.2vw,16px); font-weight: bold; }
         .game-stats div { padding: 1vh 1vw; background: rgba(76,175,80,0.2); border-radius: 1vh; border: 1px solid rgba(76,175,80,0.3); text-align: center; }
         .welcome-message { color: #fff; font-size: clamp(10px,1.1vw,16px); text-align: center; }
+        .hidden { display: none !important; }
+        .play-now-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .blinking-button { background: #4CAF50; color: white; border: none; padding: 15px 30px; font-size: clamp(14px, 2.5vw, 18px); border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .pause-indicator { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff6b6b; font-size: clamp(18px, 3vw, 24px); font-weight: bold; display: none; pointer-events: none; }
+        #gameOver { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px; z-index: 20; }
+        #gameOver h2 { color: #ff6b6b; margin: 0 0 12px; font-size: clamp(22px, 4vw, 32px); }
+        #gameOver p { margin: 6px 0; font-size: clamp(14px, 2.5vw, 18px); }
+        .game-over-choices { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        #gameOver button { background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: clamp(14px, 2.5vw, 16px); font-family: inherit; }
+        #gameOver button:hover { background: #45a049; }
+        #gameOver.hidden { display: none !important; }
         @media (max-width: 768px) {
           .game-layout { flex-direction: column; align-items: center; }
           .player-info-side, .game-stats-side { width: 90vw; max-width: 300px; flex-direction: row; justify-content: space-around; }

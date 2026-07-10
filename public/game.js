@@ -48,6 +48,7 @@ class AsteroidsGame {
         // Shooting limiter
         this.lastShotTime = 0;
         this.shotCooldown = 200; // milliseconds between shots (5 shots per second)
+        this.fireButtonHeld = false; // Mobile touch auto-fire flag
         
         // Event listeners - Desktop only
         this.setupEventListeners();
@@ -94,30 +95,36 @@ class AsteroidsGame {
     setupTouchControls() {
         if (!this.detectTouchDevice()) return;
 
+        // Prevent double-tap zoom on the entire game page
+        const meta = document.querySelector('meta[name="viewport"]');
+        if (meta && !meta.content.includes('user-scalable')) {
+            meta.content = meta.content.replace(/,?\s*user-scalable=[^,]+/, '') + ', user-scalable=no';
+        }
+
         const controls = document.createElement('div');
         controls.id = 'touch-controls';
-        controls.style.cssText = 'position:fixed;bottom:20px;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 20px;z-index:100;pointer-events:none;user-select:none';
+        controls.style.cssText = 'position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:12px 16px 24px;z-index:100;pointer-events:none;user-select:none;-webkit-user-select:none;gap:16px;';
 
         const mkBtn = (label, html, extra) => {
             const b = document.createElement('button');
             b.setAttribute('aria-label', label);
             b.innerHTML = html;
-            b.style.cssText = 'pointer-events:all;width:64px;height:64px;border-radius:50%;background:rgba(76,175,80,0.25);border:2px solid rgba(76,175,80,0.7);color:#4CAF50;font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:none;' + (extra || '');
+            b.style.cssText = 'pointer-events:all;flex-shrink:0;width:72px;height:72px;border-radius:50%;background:rgba(76,175,80,0.3);border:2px solid rgba(76,175,80,0.8);color:#4CAF50;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 0.05s, background 0.05s;box-shadow:0 4px 10px rgba(0,0,0,0.4);' + (extra || '');
             return b;
         };
 
         const rotLeft   = mkBtn('Rotate Left',  '&#8634;', '');
         const rotRight  = mkBtn('Rotate Right', '&#8635;', '');
         const thrustBtn = mkBtn('Thrust', '&#9650;', '');
-        const fireBtn   = mkBtn('Fire', '&#128308;', 'width:80px;height:80px;font-size:28px;background:rgba(76,175,80,0.35);');
+        const fireBtn   = mkBtn('Fire', '&#128308;', 'width:88px;height:88px;font-size:30px;background:rgba(76,175,80,0.45);');
 
         const rotRow = document.createElement('div');
-        rotRow.style.cssText = 'display:flex;gap:12px;pointer-events:none;';
+        rotRow.style.cssText = 'display:flex;gap:14px;pointer-events:none;';
         rotRow.appendChild(rotLeft);
         rotRow.appendChild(rotRight);
 
         const left = document.createElement('div');
-        left.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;';
+        left.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;';
         left.appendChild(rotRow);
         left.appendChild(thrustBtn);
 
@@ -125,17 +132,43 @@ class AsteroidsGame {
         controls.appendChild(fireBtn);
         document.body.appendChild(controls);
 
+        const setActive = (btn, active) => {
+            if (active) {
+                btn.style.transform = 'scale(0.92)';
+                btn.style.background = 'rgba(76,175,80,0.55)';
+            } else {
+                btn.style.transform = 'scale(1)';
+                btn.style.background = btn === fireBtn ? 'rgba(76,175,80,0.45)' : 'rgba(76,175,80,0.3)';
+            }
+        };
+
         const addHold = (btn, downFn, upFn) => {
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); downFn(); }, { passive: false });
-            btn.addEventListener('touchend',   (e) => { e.preventDefault(); if (upFn) upFn(); }, { passive: false });
-            btn.addEventListener('mousedown',  () => downFn());
-            btn.addEventListener('mouseup',    () => { if (upFn) upFn(); });
+            const start = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActive(btn, true);
+                downFn();
+            };
+            const end = (e) => {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                setActive(btn, false);
+                if (upFn) upFn();
+            };
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend',   end,  { passive: false });
+            btn.addEventListener('touchcancel', end,  { passive: false });
+            btn.addEventListener('mousedown',  () => { setActive(btn, true); downFn(); });
+            btn.addEventListener('mouseup',    () => { setActive(btn, false); if (upFn) upFn(); });
+            btn.addEventListener('mouseleave', () => { setActive(btn, false); if (upFn) upFn(); });
         };
 
         addHold(rotLeft,   () => { this.ship.rotateLeft = true;  }, () => { this.ship.rotateLeft = false; });
         addHold(rotRight,  () => { this.ship.rotateRight = true; }, () => { this.ship.rotateRight = false; });
         addHold(thrustBtn, () => { this.ship.thrusting = true;   }, () => { this.ship.thrusting = false; });
-        addHold(fireBtn,   () => { this.fireBullet(); }, null);
+        addHold(fireBtn,   () => { this.fireButtonHeld = true;   }, () => { this.fireButtonHeld = false; });
 
         this._touchControls = controls;
     }
@@ -229,6 +262,11 @@ class AsteroidsGame {
         // Update ship only if not respawning
         if (!this.isRespawning) {
             this.ship.update(this.canvas.width, this.canvas.height);
+        }
+        
+        // Continuous fire while mobile fire button is held
+        if (this.fireButtonHeld) {
+            this.fireBullet();
         }
         
         // Update bullets and remove off-screen or expired ones
@@ -581,6 +619,7 @@ class AsteroidsGame {
         this.roundAsteroidsDestroyed = 0;
         this.totalShotsFired = 0;
         this.roundShotsFired = 0;
+        this.fireButtonHeld = false;
         
         this.asteroids = [];
         this.bullets = [];
@@ -1523,7 +1562,13 @@ AsteroidsGame.prototype.draw = function() {
 
 // Touch Controls and Device Detection Methods
 AsteroidsGame.prototype.detectTouchDevice = function() {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    const isCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    const isTabletScreen = window.innerWidth <= 1024;
+    // Show on-screen controls for phones/tablets (coarse pointer), and also for
+    // touch-capable tablets/laptops with a reasonably small screen. Avoid showing
+    // them on desktop monitors that happen to support touch.
+    return isCoarsePointer || (hasTouch && isTabletScreen);
 };
 
 AsteroidsGame.prototype.setupResponsiveCanvas = function() {
