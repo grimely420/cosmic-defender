@@ -112,13 +112,13 @@ export default function GamePage() {
         <div className="game-center">
           <div className="mobile-hud">
             <span>
-              Hull <span id="lives">5</span>
+              Hull <span data-stat="lives">5</span>
             </span>
             <span>
-              Wave <span id="round">1</span>
+              Wave <span data-stat="round">1</span>
             </span>
             <span>
-              Crystals <span id="score">0</span>
+              Crystals <span data-stat="score">0</span>
             </span>
           </div>
           <canvas ref={canvasRef} id="gameCanvas" width={800} height={600} />
@@ -156,13 +156,13 @@ export default function GamePage() {
         <div className="game-stats-side">
           <div className="game-stats">
             <div>
-              Hull Integrity: <span id="lives">5</span>
+              Hull Integrity: <span data-stat="lives">5</span>
             </div>
             <div>
-              Wave: <span id="round">1</span>
+              Wave: <span data-stat="round">1</span>
             </div>
             <div>
-              Crystals: <span id="score">0</span>
+              Crystals: <span data-stat="score">0</span>
             </div>
           </div>
         </div>

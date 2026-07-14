@@ -676,9 +676,15 @@ class AsteroidsGame {
     }
     
     updateUI() {
-        document.getElementById('lives').textContent = this.lives;
-        document.getElementById('round').textContent = this.round;
-        document.getElementById('score').textContent = this.score;
+        // Update all stat panels (desktop and mobile HUD)
+        const setStat = (stat, value) => {
+            document.querySelectorAll(`[data-stat="${stat}"]`).forEach(el => {
+                el.textContent = value;
+            });
+        };
+        setStat('lives', this.lives);
+        setStat('round', this.round);
+        setStat('score', this.score);
         
         // Update pause indicator
         const pauseIndicator = document.getElementById('pauseIndicator');
