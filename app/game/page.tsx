@@ -20,12 +20,8 @@ export default function GamePage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const win = window as any;
 
-    if (win.AsteroidsGame) {
-      setTimeout(() => setGameReady(true), 0);
-      return;
-    }
+    const SCRIPT_ID = "cosmic-defender-game-script-v2";
 
-    const SCRIPT_ID = "cosmic-defender-game-script";
     if (document.getElementById(SCRIPT_ID)) {
       const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement & { dataset: DOMStringMap };
       if (existing.dataset.loaded) {
@@ -36,9 +32,15 @@ export default function GamePage() {
       return;
     }
 
+    // Clear any stale class from a cached old version so the new script defines
+    win.AsteroidsGame = undefined;
+
+    const oldScript = document.getElementById("cosmic-defender-game-script");
+    if (oldScript) oldScript.remove();
+
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
-    script.src = "/game.js";
+    script.src = "/game.js?v=2";
     script.onload = () => {
       script.dataset.loaded = "1";
       setGameReady(true);
@@ -132,7 +134,7 @@ export default function GamePage() {
           </button>
           <div id="gameOver" className="hidden">
             <div className="game-over-card">
-              <h1 className="game-over-title">MISSION FAILED</h1>
+              <h1 className="game-over-title">GAME OVER</h1>
               <div className="game-over-stats">
                 <p>
                   Crystals Collected: <span id="gameOverScore">0</span>
@@ -142,10 +144,10 @@ export default function GamePage() {
               </div>
               <div className="game-over-choices">
                 <button id="playAgain" type="button" className="mission-button">
-                  Retry Mission
+                  Try Again
                 </button>
                 <button id="endGameBtn" type="button" className="mission-button danger">
-                  Abandon Mission
+                  Quit
                 </button>
               </div>
             </div>
