@@ -27,7 +27,7 @@ class AsteroidsGame {
         this.currentRound = 1;
         this.roundScore = 0;
         this.gameOverSaved = false; // Track if game over was saved
-        this.gameOver = false; // True when the game has ended
+        this.isGameOver = false; // True when the game has ended
         this.gameOverTime = 0; // Timestamp when game over started
         
         // Respawn delay system
@@ -78,6 +78,7 @@ class AsteroidsGame {
         const startBtn = document.getElementById('startGameBtn');
         const playAgainBtn = document.getElementById('playAgain');
         const endGameBtn = document.getElementById('endGameBtn');
+        const pauseBtn = document.getElementById('pauseIndicator');
         
         if (startBtn) {
             startBtn.addEventListener('click', () => this.startGame());
@@ -89,6 +90,10 @@ class AsteroidsGame {
         
         if (endGameBtn) {
             endGameBtn.addEventListener('click', () => window.location.href = '/');
+        }
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => this.togglePause());
         }
 
         this.setupTouchControls();
@@ -240,11 +245,11 @@ class AsteroidsGame {
     }
     
     gameLoop() {
-        if (!this.gameActive && !this.gameOver) {
+        if (!this.gameActive && !this.isGameOver) {
             return;
         }
 
-        if (this.gameOver) {
+        if (this.isGameOver) {
             this.drawGameOver();
             requestAnimationFrame(() => this.gameLoop());
             return;
@@ -578,7 +583,7 @@ class AsteroidsGame {
     }
     
     loseLife() {
-        if (this.gameOver) return;
+        if (this.isGameOver) return;
 
         this.lives--;
         this.updateUI();
@@ -609,10 +614,11 @@ class AsteroidsGame {
     }
     
     gameOver() {
-        if (this.gameOver) return;
+        if (this.isGameOver) return;
 
         this.gameActive = false;
-        this.gameOver = true;
+        this.isGameOver = true;
+        this.gamePaused = false;
         this.gameOverTime = Date.now();
 
         // Only save once per game
@@ -621,6 +627,12 @@ class AsteroidsGame {
             this.saveFinalScore();
         }
 
+        const gameOverScore = document.getElementById('gameOverScore');
+        if (gameOverScore) {
+            gameOverScore.textContent = this.score;
+        }
+
+        this.updateUI();
         document.getElementById('gameOver').classList.remove('hidden');
     }
     
@@ -632,7 +644,7 @@ class AsteroidsGame {
         this.roundScore = 0;
         this.gameOverSaved = false; // Reset the saved flag
         this.currentGameId = null; // Reset game ID for new game
-        this.gameOver = false;
+        this.isGameOver = false;
         this.gameOverTime = 0;
 
         // Reset statistics
@@ -646,15 +658,17 @@ class AsteroidsGame {
         this.bullets = [];
         this.explosions = [];
         this.isRespawning = false;
+        this.gamePaused = false;
         this.ship.reset(this.canvas.width, this.canvas.height);
         this.ship.visible = true;
         this.gameActive = false;
 
         document.getElementById('gameOver').classList.add('hidden');
-        
+        this.updateUI();
+
         // Start new game in database first to avoid race with save calls
         await this.startNewGame();
-        
+
         this.gameActive = true;
         this.spawnAsteroids(4);
         this.updateUI();
@@ -669,7 +683,7 @@ class AsteroidsGame {
         // Update pause indicator
         const pauseIndicator = document.getElementById('pauseIndicator');
         if (pauseIndicator) {
-            pauseIndicator.textContent = this.gamePaused ? 'PAUSED' : '';
+            pauseIndicator.textContent = this.gamePaused ? 'MISSION PAUSED' : '';
             pauseIndicator.style.display = this.gamePaused ? 'block' : 'none';
         }
     }
@@ -1570,7 +1584,7 @@ class Explosion {
 
 // Draw function for the game
 AsteroidsGame.prototype.draw = function() {
-    if (this.gameOver) {
+    if (this.isGameOver) {
         this.drawGameOver();
         return;
     }
@@ -1586,8 +1600,8 @@ AsteroidsGame.prototype.draw = function() {
     this.explosions.forEach(explosion => explosion.draw(this.ctx));
 };
 
-// Draw the game over screen directly on the canvas, spreading the text
-// across the whole canvas with blinking and graphical effects.
+// Draw the game over background effects on the canvas. The text and
+// buttons are rendered by the HTML overlay so they are real, clickable UI.
 AsteroidsGame.prototype.drawGameOver = function() {
     const ctx = this.ctx;
     const w = this.canvas.width;
@@ -1595,7 +1609,6 @@ AsteroidsGame.prototype.drawGameOver = function() {
     const now = Date.now();
     const elapsed = now - this.gameOverTime;
     const pulse = (Math.sin(elapsed / 300) + 1) / 2;
-    const blink = Math.sin(elapsed / 150) > 0;
 
     // Clear and darken the background
     ctx.fillStyle = 'black';
@@ -1639,55 +1652,8 @@ AsteroidsGame.prototype.drawGameOver = function() {
     ctx.stroke();
     ctx.restore();
 
-    // Text helper that handles canvas scaling and glow
-    const drawLine = (text, y, options = {}) => {
-        const { fontSize = h * 0.05, color = '#fff', font = 'monospace', bold = false, shadowColor = color, shadowBlur = 10, alpha = 1 } = options;
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = `${bold ? 'bold ' : ''}${fontSize}px ${font}`;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = alpha;
-        ctx.shadowColor = shadowColor;
-        ctx.shadowBlur = shadowBlur;
-        ctx.fillText(text, w / 2, y);
-        ctx.restore();
-    };
-
-    // 1. MISSION FAILED — large, blinking title
-    const titleAlpha = blink ? 1 : 0.55;
-    drawLine('MISSION FAILED', h * 0.16, {
-        fontSize: h * 0.12,
-        color: '#ff3333',
-        bold: true,
-        font: 'Arial Black, Arial, sans-serif',
-        shadowColor: '#ff0000',
-        shadowBlur: 25 + pulse * 20,
-        alpha: titleAlpha
-    });
-
-    // 2. Crystals Collected
-    drawLine(`Crystals Collected: ${this.score}`, h * 0.38, {
-        fontSize: h * 0.06,
-        color: '#ffcc00',
-        shadowColor: '#ffaa00',
-        shadowBlur: 15
-    });
-
-    // 3. Hull Integrity
-    drawLine('Hull Integrity: Critical Failure', h * 0.58, {
-        fontSize: h * 0.055,
-        color: '#ff6b6b',
-        shadowColor: '#ff4444',
-        shadowBlur: 12
-    });
-
-    // 4. Humanity line
-    drawLine("Humanity's fate hangs in the balance...", h * 0.74, {
-        fontSize: h * 0.045,
-        color: '#bbbbbb',
-        shadowBlur: 6
-    });
+    // Game-over text is rendered by the HTML overlay so the buttons are real
+    // clickable elements. The canvas keeps the animated background effects.
 };
 
 // Touch Controls and Device Detection Methods

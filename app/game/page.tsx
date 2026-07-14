@@ -123,17 +123,31 @@ export default function GamePage() {
           </div>
           <canvas ref={canvasRef} id="gameCanvas" width={800} height={600} />
           <div id="playNowButton" className="play-now-button">
-            <button id="startGameBtn" className="blinking-button">
+            <button id="startGameBtn" type="button" className="mission-button blinking">
               BEGIN MISSION
             </button>
           </div>
-          <div id="pauseIndicator" className="pause-indicator">
+          <button id="pauseIndicator" type="button" className="mission-button pause-indicator">
             MISSION PAUSED
-          </div>
+          </button>
           <div id="gameOver" className="hidden">
-            <div className="game-over-choices">
-              <button id="playAgain">Retry Mission</button>
-              <button id="endGameBtn">Abandon Mission</button>
+            <div className="game-over-card">
+              <h1 className="game-over-title">MISSION FAILED</h1>
+              <div className="game-over-stats">
+                <p>
+                  Crystals Collected: <span id="gameOverScore">0</span>
+                </p>
+                <p>Hull Integrity: Critical Failure</p>
+                <p>Humanity&apos;s fate hangs in the balance...</p>
+              </div>
+              <div className="game-over-choices">
+                <button id="playAgain" type="button" className="mission-button">
+                  Retry Mission
+                </button>
+                <button id="endGameBtn" type="button" className="mission-button danger">
+                  Abandon Mission
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -240,13 +254,41 @@ export default function GamePage() {
         .welcome-message { color: #fff; font-size: clamp(10px,1.1vw,16px); text-align: center; }
         .hidden { display: none !important; }
         .play-now-button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
-        .blinking-button { background: #4CAF50; color: white; border: none; padding: 15px 30px; font-size: clamp(14px, 2.5vw, 18px); border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; animation: blink 1s infinite; }
+        .mission-button {
+          background: #4CAF50;
+          color: #fff;
+          border: 2px solid #4CAF50;
+          padding: 15px 30px;
+          font-size: clamp(14px, 2.5vw, 18px);
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: bold;
+          font-family: inherit;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          box-shadow: 0 0 15px rgba(76, 175, 80, 0.5), 0 4px 0 #2e7d32;
+          transition: all 0.15s ease;
+          pointer-events: auto;
+          min-width: 160px;
+          text-align: center;
+        }
+        .mission-button:hover { background: #66bb6a; border-color: #66bb6a; box-shadow: 0 0 25px rgba(76, 175, 80, 0.8), 0 4px 0 #2e7d32; transform: translateY(-2px); }
+        .mission-button:active { transform: translateY(2px); box-shadow: 0 0 10px rgba(76, 175, 80, 0.4), 0 1px 0 #2e7d32; }
+        .mission-button.danger { background: #ff6b6b; border-color: #ff6b6b; box-shadow: 0 0 15px rgba(255, 107, 107, 0.5), 0 4px 0 #b71c1c; }
+        .mission-button.danger:hover { background: #ff8585; border-color: #ff8585; box-shadow: 0 0 25px rgba(255, 107, 107, 0.8), 0 4px 0 #b71c1c; }
+        .mission-button.danger:active { box-shadow: 0 0 10px rgba(255, 107, 107, 0.4), 0 1px 0 #b71c1c; }
+        .mission-button.blinking { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .pause-indicator { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff6b6b; font-size: clamp(18px, 3vw, 24px); font-weight: bold; display: none; pointer-events: none; }
-        #gameOver { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 20px 8vh; box-sizing: border-box; z-index: 120; pointer-events: none; }
-        .game-over-choices { display: flex; flex-direction: row; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: center; pointer-events: auto; }
-        #gameOver button { background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 2px solid #4CAF50; padding: 14px 28px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: clamp(14px, 2.5vw, 18px); font-family: inherit; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 12px rgba(76, 175, 80, 0.4); transition: all 0.15s ease; }
-        #gameOver button:hover { background: #4CAF50; color: white; box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); transform: scale(1.05); }
+        .pause-indicator { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: #ff6b6b; border-color: #ff6b6b; color: #fff; display: none; box-shadow: 0 0 15px rgba(255, 107, 107, 0.5), 0 4px 0 #b71c1c; }
+        .pause-indicator:hover { background: #ff8585; border-color: #ff8585; box-shadow: 0 0 25px rgba(255, 107, 107, 0.8), 0 4px 0 #b71c1c; }
+        .pause-indicator:active { box-shadow: 0 0 10px rgba(255, 107, 107, 0.4), 0 1px 0 #b71c1c; }
+        #gameOver { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; z-index: 120; pointer-events: none; }
+        .game-over-card { background: rgba(15, 15, 35, 0.95); border: 2px solid rgba(76, 175, 80, 0.5); border-radius: 20px; padding: 40px 30px; max-width: 520px; width: 90%; text-align: center; pointer-events: auto; box-shadow: 0 0 40px rgba(76, 175, 80, 0.3); backdrop-filter: blur(10px); }
+        .game-over-title { color: #ff3333; font-size: clamp(28px, 5vw, 48px); margin: 0 0 20px; text-shadow: 0 0 20px rgba(255, 51, 51, 0.7); font-weight: 900; letter-spacing: 2px; }
+        .game-over-stats { color: #fff; font-size: clamp(16px, 2.5vw, 22px); margin-bottom: 30px; display: flex; flex-direction: column; gap: 12px; }
+        .game-over-stats p { margin: 0; }
+        .game-over-stats span { color: #ffcc00; font-weight: bold; }
+        .game-over-choices { display: flex; flex-direction: row; gap: 20px; flex-wrap: wrap; align-items: center; justify-content: center; }
         #gameOver.hidden { display: none !important; }
         .mobile-hud { display: none; }
         @media (max-width: 768px) {
@@ -275,9 +317,12 @@ export default function GamePage() {
             pointer-events: none;
           }
           .mobile-hud > span > span { color: #4CAF50; }
-          #gameOver { padding-bottom: 3vh; }
-          .game-over-choices { gap: 10px; }
-          #gameOver button { padding: 10px 20px; font-size: 14px; }
+          #gameOver { padding: 10px; }
+          .game-over-card { padding: 24px 16px; border-radius: 16px; }
+          .game-over-title { font-size: clamp(22px, 8vw, 36px); margin-bottom: 14px; }
+          .game-over-stats { font-size: clamp(14px, 4vw, 18px); margin-bottom: 20px; }
+          .game-over-choices { gap: 12px; }
+          .mission-button { padding: 12px 20px; font-size: 14px; min-width: 130px; }
         }
       `}</style>
     </div>
