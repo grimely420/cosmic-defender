@@ -131,13 +131,7 @@ export default function GamePage() {
             MISSION PAUSED
           </div>
           <div id="gameOver" className="hidden">
-            <h2>MISSION FAILED</h2>
-            <p>
-              Crystals Collected: <span id="finalScore">0</span>
-            </p>
-            <p>Hull Integrity: Critical Failure</p>
             <div className="game-over-choices">
-              <p>Humanity&apos;s fate hangs in the balance...</p>
               <button id="playAgain">Retry Mission</button>
               <button id="endGameBtn">Abandon Mission</button>
             </div>
@@ -249,12 +243,10 @@ export default function GamePage() {
         .blinking-button { background: #4CAF50; color: white; border: none; padding: 15px 30px; font-size: clamp(14px, 2.5vw, 18px); border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         .pause-indicator { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff6b6b; font-size: clamp(18px, 3vw, 24px); font-weight: bold; display: none; pointer-events: none; }
-        #gameOver { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px; z-index: 20; }
-        #gameOver h2 { color: #ff6b6b; margin: 0 0 12px; font-size: clamp(22px, 4vw, 32px); }
-        #gameOver p { margin: 6px 0; font-size: clamp(14px, 2.5vw, 18px); }
-        .game-over-choices { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
-        #gameOver button { background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: clamp(14px, 2.5vw, 16px); font-family: inherit; }
-        #gameOver button:hover { background: #45a049; }
+        #gameOver { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 20px 8vh; box-sizing: border-box; z-index: 120; pointer-events: none; }
+        .game-over-choices { display: flex; flex-direction: row; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: center; pointer-events: auto; }
+        #gameOver button { background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 2px solid #4CAF50; padding: 14px 28px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: clamp(14px, 2.5vw, 18px); font-family: inherit; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 12px rgba(76, 175, 80, 0.4); transition: all 0.15s ease; }
+        #gameOver button:hover { background: #4CAF50; color: white; box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); transform: scale(1.05); }
         #gameOver.hidden { display: none !important; }
         .mobile-hud { display: none; }
         @media (max-width: 768px) {
@@ -283,6 +275,9 @@ export default function GamePage() {
             pointer-events: none;
           }
           .mobile-hud > span > span { color: #4CAF50; }
+          #gameOver { padding-bottom: 3vh; }
+          .game-over-choices { gap: 10px; }
+          #gameOver button { padding: 10px 20px; font-size: 14px; }
         }
       `}</style>
     </div>

@@ -27,6 +27,8 @@ class AsteroidsGame {
         this.currentRound = 1;
         this.roundScore = 0;
         this.gameOverSaved = false; // Track if game over was saved
+        this.gameOver = false; // True when the game has ended
+        this.gameOverTime = 0; // Timestamp when game over started
         
         // Respawn delay system
         this.isRespawning = false;
@@ -238,18 +240,24 @@ class AsteroidsGame {
     }
     
     gameLoop() {
-        if (!this.gameActive) {
+        if (!this.gameActive && !this.gameOver) {
             return;
         }
-        
+
+        if (this.gameOver) {
+            this.drawGameOver();
+            requestAnimationFrame(() => this.gameLoop());
+            return;
+        }
+
         if (this.gamePaused) {
             requestAnimationFrame(() => this.gameLoop());
             return;
         }
-        
+
         this.update();
         this.draw();
-        
+
         requestAnimationFrame(() => this.gameLoop());
     }
     
@@ -570,9 +578,11 @@ class AsteroidsGame {
     }
     
     loseLife() {
+        if (this.gameOver) return;
+
         this.lives--;
         this.updateUI();
-        
+
         if (this.lives <= 0) {
             this.gameOver();
         } else {
@@ -599,15 +609,18 @@ class AsteroidsGame {
     }
     
     gameOver() {
+        if (this.gameOver) return;
+
         this.gameActive = false;
-        
+        this.gameOver = true;
+        this.gameOverTime = Date.now();
+
         // Only save once per game
         if (!this.gameOverSaved) {
             this.gameOverSaved = true;
             this.saveFinalScore();
         }
-        
-        document.getElementById('finalScore').textContent = this.score;
+
         document.getElementById('gameOver').classList.remove('hidden');
     }
     
@@ -619,14 +632,16 @@ class AsteroidsGame {
         this.roundScore = 0;
         this.gameOverSaved = false; // Reset the saved flag
         this.currentGameId = null; // Reset game ID for new game
-        
+        this.gameOver = false;
+        this.gameOverTime = 0;
+
         // Reset statistics
         this.totalAsteroidsDestroyed = 0;
         this.roundAsteroidsDestroyed = 0;
         this.totalShotsFired = 0;
         this.roundShotsFired = 0;
         this.fireButtonHeld = false;
-        
+
         this.asteroids = [];
         this.bullets = [];
         this.explosions = [];
@@ -634,7 +649,7 @@ class AsteroidsGame {
         this.ship.reset(this.canvas.width, this.canvas.height);
         this.ship.visible = true;
         this.gameActive = false;
-        
+
         document.getElementById('gameOver').classList.add('hidden');
         
         // Start new game in database first to avoid race with save calls
@@ -1555,15 +1570,124 @@ class Explosion {
 
 // Draw function for the game
 AsteroidsGame.prototype.draw = function() {
+    if (this.gameOver) {
+        this.drawGameOver();
+        return;
+    }
+
     // Clear canvas
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     // Draw objects
     this.ship.draw(this.ctx);
     this.asteroids.forEach(asteroid => asteroid.draw(this.ctx));
     this.bullets.forEach(bullet => bullet.draw(this.ctx));
     this.explosions.forEach(explosion => explosion.draw(this.ctx));
+};
+
+// Draw the game over screen directly on the canvas, spreading the text
+// across the whole canvas with blinking and graphical effects.
+AsteroidsGame.prototype.drawGameOver = function() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const now = Date.now();
+    const elapsed = now - this.gameOverTime;
+    const pulse = (Math.sin(elapsed / 300) + 1) / 2;
+    const blink = Math.sin(elapsed / 150) > 0;
+
+    // Clear and darken the background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw the frozen game objects dimly so the screen still feels alive
+    ctx.globalAlpha = 0.25;
+    this.ship.draw(ctx);
+    this.asteroids.forEach(asteroid => asteroid.draw(ctx));
+    this.bullets.forEach(bullet => bullet.draw(ctx));
+    this.explosions.forEach(explosion => explosion.draw(ctx));
+    ctx.globalAlpha = 1.0;
+
+    // Red radial glow behind the text
+    const glow = ctx.createRadialGradient(w / 2, h / 2, h * 0.15, w / 2, h / 2, h * 0.9);
+    glow.addColorStop(0, `rgba(180, 0, 0, ${0.25 + pulse * 0.25})`);
+    glow.addColorStop(0.5, 'rgba(100, 0, 0, 0.45)');
+    glow.addColorStop(1, 'rgba(30, 0, 0, 0.95)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+
+    // Animated warning bars at the top and bottom
+    const barHeight = h * 0.03;
+    const barAlpha = 0.5 + pulse * 0.5;
+    ctx.fillStyle = `rgba(255, 0, 0, ${barAlpha})`;
+    ctx.fillRect(0, h * 0.02, w, barHeight);
+    ctx.fillRect(0, h - h * 0.02 - barHeight, w, barHeight);
+
+    // Draw a broken/cracked warning chevron in the upper background
+    ctx.save();
+    ctx.translate(w / 2, h * 0.30);
+    const chevronScale = Math.min(w, h) * 0.12;
+    ctx.strokeStyle = `rgba(255, 0, 0, ${0.2 + pulse * 0.3})`;
+    ctx.lineWidth = 4 + pulse * 3;
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 20 + pulse * 20;
+    ctx.beginPath();
+    ctx.moveTo(-chevronScale, -chevronScale * 0.6);
+    ctx.lineTo(0, chevronScale * 0.4);
+    ctx.lineTo(chevronScale, -chevronScale * 0.6);
+    ctx.stroke();
+    ctx.restore();
+
+    // Text helper that handles canvas scaling and glow
+    const drawLine = (text, y, options = {}) => {
+        const { fontSize = h * 0.05, color = '#fff', font = 'monospace', bold = false, shadowColor = color, shadowBlur = 10, alpha = 1 } = options;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${bold ? 'bold ' : ''}${fontSize}px ${font}`;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = shadowBlur;
+        ctx.fillText(text, w / 2, y);
+        ctx.restore();
+    };
+
+    // 1. MISSION FAILED — large, blinking title
+    const titleAlpha = blink ? 1 : 0.55;
+    drawLine('MISSION FAILED', h * 0.16, {
+        fontSize: h * 0.12,
+        color: '#ff3333',
+        bold: true,
+        font: 'Arial Black, Arial, sans-serif',
+        shadowColor: '#ff0000',
+        shadowBlur: 25 + pulse * 20,
+        alpha: titleAlpha
+    });
+
+    // 2. Crystals Collected
+    drawLine(`Crystals Collected: ${this.score}`, h * 0.38, {
+        fontSize: h * 0.06,
+        color: '#ffcc00',
+        shadowColor: '#ffaa00',
+        shadowBlur: 15
+    });
+
+    // 3. Hull Integrity
+    drawLine('Hull Integrity: Critical Failure', h * 0.58, {
+        fontSize: h * 0.055,
+        color: '#ff6b6b',
+        shadowColor: '#ff4444',
+        shadowBlur: 12
+    });
+
+    // 4. Humanity line
+    drawLine("Humanity's fate hangs in the balance...", h * 0.74, {
+        fontSize: h * 0.045,
+        color: '#bbbbbb',
+        shadowBlur: 6
+    });
 };
 
 // Touch Controls and Device Detection Methods
